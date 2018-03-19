@@ -16,6 +16,10 @@
 #include <boost/graph/clustering_coefficient.hpp>
 #include <boost/graph/exterior_property.hpp>
 
+// std includes
+#include <numeric>
+#include <limits>
+
 #ifndef FLOORPLANGRAPH_H
 #define FLOORPLANGRAPH_H
 
@@ -71,6 +75,49 @@ public:
     std::vector<LineSegment> roomLayout;
     double maxx,maxy,minx,miny;
     Point2D centroid;
+
+    /**
+     * @brief update the members (maxx,maxy,minx,miny) based on the roomLayout
+     */
+    void updateExtent() {
+        // find the extent (min_x, min_y, max_x, max_y) of the layout
+        std::array<double, 4> extent = {
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<double>::min(),
+            std::numeric_limits<double>::min()
+        };
+
+        extent = std::accumulate(
+            roomLayout.begin(), roomLayout.end(),
+            extent,
+            [](auto &extent, const auto &segment) {
+                double current_min_x = std::min(segment.startPos.x, segment.endPos.x);
+                double current_min_y = std::min(segment.startPos.y, segment.endPos.y);
+                double current_max_x = std::max(segment.startPos.x, segment.endPos.x);
+                double current_max_y = std::max(segment.startPos.y, segment.endPos.y);
+                if (current_min_x < extent[0]) {
+                    extent[0] = current_min_x;
+                }
+                if (current_min_y < extent[1]) {
+                    extent[1] = current_min_y;
+                }
+                if (current_max_x > extent[2]) {
+                    extent[2] = current_max_x;
+                }
+                if (current_max_y > extent[3]) {
+                    extent[3] = current_max_y;
+                }
+
+                return extent;
+            }
+        );
+
+        minx = extent[0];
+        miny = extent[1];
+        maxx = extent[2];
+        maxy = extent[3];
+    }
 
     template<class Archive>
         void serialize(Archive &ar, const unsigned int version)

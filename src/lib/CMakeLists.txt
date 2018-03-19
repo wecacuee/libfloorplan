@@ -4,7 +4,7 @@ include_directories(/usr/include/boost)
 find_package(Boost COMPONENTS graph serialization REQUIRED)
 
 
-ADD_LIBRARY(floorplan STATIC
+ADD_LIBRARY(floorplan SHARED
 GraphStatistics.cpp
 GraphDatabase.cpp
 GraphFileOperations.hpp

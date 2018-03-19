@@ -117,6 +117,7 @@ public:
 
                         currentVertex = searchResult.second;
                     }
+
                     // For each space's children
                     BOOST_FOREACH(ptree::value_type &i,
                                   v.second)
@@ -132,15 +133,31 @@ public:
                                     outGraph[currentVertex].centroid.x = strtod(GetAttr(l, "x").c_str(), &endptr);
                                     outGraph[currentVertex].centroid.y = strtod(GetAttr(l, "y").c_str(), &endptr);
                                 }
-                                if( ((string)l.first.data()).compare("extent") == 0 ){
+                                else if( ((string)l.first.data()).compare("extent") == 0 ){
 
                                     outGraph[currentVertex].maxx = strtod(GetAttr(l, "maxx").c_str(), &endptr);
                                     outGraph[currentVertex].maxy = strtod(GetAttr(l, "maxy").c_str(), &endptr);
                                     outGraph[currentVertex].minx = strtod(GetAttr(l, "minx").c_str(), &endptr);
                                     outGraph[currentVertex].miny = strtod(GetAttr(l, "miny").c_str(), &endptr);
                                 }
-                                if( ((string)l.first.data()).compare("point") == 0 ){
+                                else if( ((string)l.first.data()).compare("point") == 0 ){
                                     points.push_back(Point2D(strtod(GetAttr(l, "x").c_str(), &endptr), strtod(GetAttr(l, "y").c_str(), &endptr)));
+                                }
+                                else if ( ((string)l.first.data()).compare("linesegment") == 0 ) {
+                                    LineSegment lsegment;
+                                    lsegment.startPos = Point2D(
+                                        strtod(GetAttr(l, "x1").c_str(), &endptr),
+                                        strtod(GetAttr(l, "y1").c_str(), &endptr)
+                                    );
+
+                                    lsegment.endPos = Point2D(
+                                        strtod(GetAttr(l, "x2").c_str(), &endptr),
+                                        strtod(GetAttr(l, "y2").c_str(), &endptr)
+                                    );
+
+                                    lsegment.type = GetAttr(l, "type");
+                                    lsegment.portalToRoom = GetAttr(l, "target");
+                                    outGraph[currentVertex].roomLayout.push_back(lsegment);
                                 }
                             } // for each contour children
 
@@ -158,6 +175,7 @@ public:
                                     outGraph[currentVertex].roomLayout.push_back(lsegment);
                                 }
                             }
+                            outGraph[currentVertex].updateExtent();
 
                         } // if it's a contour
 
