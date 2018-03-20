@@ -30,6 +30,31 @@ class Point2D{
 public:
     Point2D(double x_, double y_): x(x_), y(y_) {}
     Point2D() { x = -1; y = -1; }
+
+    Point2D operator+(const Point2D& new_point) const
+    {
+        return Point2D(
+            this->x + new_point.x,
+            this->y + new_point.y
+        );
+    }
+
+    Point2D operator-(const Point2D& new_point) const
+    {
+        return Point2D(
+            this->x - new_point.x,
+            this->y - new_point.y
+        );
+    }
+    template<class T>
+    Point2D operator/(T operand)
+    {
+        return Point2D(
+            this->x / operand,
+            this->y / operand
+        );
+    }
+
     double x;
     double y;
 

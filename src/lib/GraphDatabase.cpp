@@ -27,6 +27,7 @@ void GraphDatabase::loadGraphs(string sDir, string rootNodeName, int iLimit, boo
     if (!append)
         _graphs = vector<floorplanGraph>();
     _graphProperties = GraphFileOperations::loadAllGraphsInFolder(sDir, _graphs, rootNodeName, iLimit);
+    updateExtent();
 }
 
 
@@ -201,6 +202,48 @@ void GraphDatabase::Init(){
     mergeCentralNodes(3, "CORR");
     removeGraphsSmallerThan(5);
     removeCategoriesBasedonFrequency(100);
+}
+
+void GraphDatabase::updateExtent() {
+    for (auto &graph: _graphs) {
+        std::array<double, 4> extent = {
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<double>::min(),
+            std::numeric_limits<double>::min()
+        };
+
+        size_t num_spaces = 0;
+        BGL_FORALL_VERTICES(v, graph, floorplanGraph) {
+            auto vertex = graph[v];
+            
+            if (vertex.minx < extent[0]) {
+                extent[0] = vertex.minx;
+            }
+            if (vertex.miny < extent[1]) {
+                extent[1] = vertex.miny;
+            }
+            if (vertex.maxx > extent[2]) {
+                extent[2] = vertex.maxx;
+            }
+            if (vertex.maxy > extent[3]) {
+                extent[3] = vertex.maxy;
+            }
+
+            graph.m_property->centroid.x += vertex.centroid.x;
+            graph.m_property->centroid.y += vertex.centroid.y;
+            num_spaces++;
+        }
+
+        graph.m_property->minx = extent[0];
+        graph.m_property->miny = extent[1];
+        graph.m_property->maxx = extent[2];
+        graph.m_property->maxy = extent[3];
+
+        // centroid is just in the middle of min_x
+        graph.m_property->centroid.x = (graph.m_property->minx + graph.m_property->maxx)/2;
+        graph.m_property->centroid.y = (graph.m_property->miny + graph.m_property->maxy)/2;
+    }
 }
 
 }

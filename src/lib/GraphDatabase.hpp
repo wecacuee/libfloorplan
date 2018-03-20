@@ -102,6 +102,12 @@ public:
       * Filter and prepare graphs
       */
     void Init();
+
+    /**
+     * @brief update the members (maxx,maxy,minx,miny and centroid) based on the roomLayout
+     * @param outGraph
+     */
+    void updateExtent();
 };
 
 }
