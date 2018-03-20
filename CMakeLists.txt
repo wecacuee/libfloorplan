@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 Project(LibFloorPlan)
+
+add_compile_options("-std=c++14")
+
 get_filename_component(PROJECT_ROOT . ABSOLUTE)
 # You can prepare verbose Makefile to see what's going.
 set(CMAKE_VERBOSE_MAKEFILE false)
