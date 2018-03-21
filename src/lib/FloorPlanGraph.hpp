@@ -46,12 +46,22 @@ public:
             this->y - new_point.y
         );
     }
+
     template<class T>
     Point2D operator/(T operand)
     {
         return Point2D(
             this->x / operand,
             this->y / operand
+        );
+    }
+
+    template<class T>
+    Point2D operator*(T operand)
+    {
+        return Point2D(
+            this->x * operand,
+            this->y * operand
         );
     }
 
@@ -189,12 +199,14 @@ public:
   */
 class graphProperties{
 public:
-    graphProperties(){ maxx = -1; maxy=-1; minx=-1; miny=-1;}
+    graphProperties(){ maxx = -1; maxy=-1; minx=-1; miny=-1; pixel_distance=-1; real_distance=-1; }
 
     std::string floorname;
     std::string filepath;
     double maxx,maxy,minx,miny;
     Point2D centroid;
+    double pixel_distance;
+    double real_distance;
 
     template<class Archive>
         void serialize(Archive &ar, const unsigned int version)

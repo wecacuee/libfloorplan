@@ -182,6 +182,12 @@ public:
                     } // for each space children
                 } // if space with an non-empty name
             } // if space
+            else if ( ((string)v.first.data()).compare("Scale") == 0 )
+            {
+                char* endptr;
+                currentGraphProperty.pixel_distance = strtod(GetAttr(v, "PixelDistance").c_str(), &endptr);
+                currentGraphProperty.real_distance = strtod(GetAttr(v, "RealDistance").c_str(), &endptr);
+            } // if Scale
         }
 
 
@@ -227,6 +233,7 @@ public:
             } // if this is a space
         } // Adding edges end
 
+        *(outGraph.m_property) = currentGraphProperty;
         return currentGraphProperty;
     }
 
