@@ -405,11 +405,12 @@ static   void saveGraphToPNG(std::string filenamePath, const simpleGraph& Graph)
     }
   
   /**
-   * @brief transfroms from graph coordinates to map coordinate of the given size and resolution
+   * @brief transforms from graph coordinates to map coordinate of the given size and resolution
    * @param graph the floorplan graph
    * @param point the point in graph coordinates whose map coordinates are required
    * @param map_size the size of the output map
    * @param target_resolution target resolution of the output map (m/pixels)
+   * @return point in map frame
    */
   static Point2D transformToMapCoords(const floorplanGraph &graph, Point2D point, cv::Size map_size, double target_resolution)
   {
@@ -421,6 +422,26 @@ static   void saveGraphToPNG(std::string filenamePath, const simpleGraph& Graph)
     auto map_point = offsetted_point * current_resolution / target_resolution + map_centroid;
 
     return map_point;
+  }
+
+  /**
+   * @brief transforms from mpa coordinates to graph coordinate of the given map size and resolution
+   * @param graph the floorplan graph
+   * @param point the point in map coordinates whose graph coordinates are required
+   * @param map_size the size of the output map
+   * @param target_resolution target resolution of the output map (m/pixels)
+   * @return point in graph frame
+   */
+  static Point2D transformToGraphCoords(const floorplanGraph &graph, Point2D point, cv::Size map_size, double target_resolution)
+  {
+    Point2D map_centroid(map_size.width/2.0, map_size.height/2.0);
+    
+    // m/pixel in the current scale
+    double current_resolution = graph.m_property->real_distance / graph.m_property->pixel_distance;
+    auto offsetted_point = point - map_centroid; 
+    auto graph_point = offsetted_point * target_resolution / graph.m_property->real_distance + graph.m_property->centroid;
+
+    return graph_point;
   }
 
   /**
@@ -517,11 +538,13 @@ static   void saveGraphToPNG(std::string filenamePath, const simpleGraph& Graph)
    * @param graph the floorplanGraph to be saved
    * @param resolution m/pixels
    * @param size size of the map
+   * @return map of opencv mat type
    */
-  static void saveGraphLayoutToPNG(std::string filename, const floorplanGraph &graph, double target_resolution=0.55, cv::Size map_size=cv::Size(256, 128))
+  static cv::Mat saveGraphLayoutToPNG(std::string filename, const floorplanGraph &graph, double target_resolution=0.55, cv::Size map_size=cv::Size(256, 128))
   {
     cv::Mat map =  getGraphLayout(graph, target_resolution, map_size);
     cv::imwrite(filename, map);
+    return map;
   }
 
 };
