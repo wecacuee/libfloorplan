@@ -11,6 +11,10 @@
 #include <boost/foreach.hpp>
 #include <boost/graph/iteration_macros.hpp>
 
+// OpenCV inclues
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 // std includes
 #include <iostream>
 #include <sstream>
@@ -399,11 +403,127 @@ static   void saveGraphToPNG(std::string filenamePath, const simpleGraph& Graph)
         saveGraphToDot(filenamePath,Graph);
         system(("neato -Tpng -Gcharset=latin1 " + filenamePath + " > " + filenamePath + ".png").c_str());
     }
+  
+  /**
+   * @brief transfroms from graph coordinates to map coordinate of the given size and resolution
+   * @param graph the floorplan graph
+   * @param point the point in graph coordinates whose map coordinates are required
+   * @param map_size the size of the output map
+   * @param target_resolution target resolution of the output map (m/pixels)
+   */
+  static Point2D transformToMapCoords(const floorplanGraph &graph, Point2D point, cv::Size map_size, double target_resolution)
+  {
+    Point2D map_centroid(map_size.width/2.0, map_size.height/2.0);
+    
+    // m/pixel in the current scale
+    double current_resolution = graph.m_property->real_distance / graph.m_property->pixel_distance;
+    auto offsetted_point = point - graph.m_property->centroid;
+    auto map_point = offsetted_point * current_resolution / target_resolution + map_centroid;
 
+    return map_point;
+  }
 
-  static  void saveGraphLayoutToPNG(std::string filenamePath, const floorplanGraph& Graph){
+  /**
+   * @brief get start and end of a line segment in the map frame
+   * @param graph the floorplan graph
+   * @param segment the line segment whose endpoints are desired
+   * @param map_size the size of the output map
+   * @param target_resolution target resolution of the output map (m/pixels)
+   */
+  static std::array<Point2D, 2> getSegmentStartEnd(const floorplanGraph &graph, const LineSegment segment, cv::Size map_size, double target_resolution)
+  {
+    return {
+        transformToMapCoords(graph, segment.startPos, map_size, target_resolution), 
+        transformToMapCoords(graph, segment.endPos,   map_size, target_resolution) 
+    };
+  }
 
+  /**
+   * @brief get the 2D layout of a floorplahGraph as cv::Mat
+   * @param filename filename to save as
+   * @param graph the floorplanGraph to be saved
+   * @param resolution m/pixels
+   * @param size size of the map
+   * @return map of opencv mat type
+   */
+  static cv::Mat getGraphLayout(const floorplanGraph &graph, double target_resolution=0.55, cv::Size map_size=cv::Size(256, 128))
+  {
+  
+    cv::Mat map(map_size, CV_8UC1, cv::Scalar(255));
+  
+    if (graph.m_property->real_distance == -1
+        || graph.m_property->pixel_distance == -1)
+    {
+      std::cerr << "No scale information for graph " << graph.m_property->floorname << std::endl;
+      return cv::Mat();
     }
+  
+    // m/pixel in the current scale
+    double current_resolution = graph.m_property->real_distance / graph.m_property->pixel_distance;
+  
+    // check if the map is going to be clipped
+    if ((graph.m_property->maxx - graph.m_property->minx) * current_resolution / target_resolution > map_size.width)
+    {
+      std::cerr << "Map " << graph.m_property->floorname << " clipped along x" << std::endl;
+    }
+    if ((graph.m_property->maxy - graph.m_property->miny) * current_resolution / target_resolution > map_size.height)
+    {
+      std::cerr << "Map " << graph.m_property->floorname << " clipped along y" << std::endl;
+    }
+  
+    std::vector<LineSegment> door_segments;
+  
+    BGL_FORALL_VERTICES(v, graph, floorplanGraph)
+    {
+      auto vertex = graph[v];
+      auto segments = vertex.roomLayout;
+  
+      for (const auto &segment: segments)
+      {
+        if (segment.type.compare("Portal") == 0)
+        {
+          door_segments.push_back(segment);
+          continue;
+        }
+  
+        auto map_start_end = getSegmentStartEnd(graph, segment, map_size, target_resolution);
+  
+        cv::line(
+          map,
+          cv::Point(map_start_end[0].x, map_start_end[0].y), cv::Point(map_start_end[1].x, map_start_end[1].y),
+          0
+        );
+      }
+    }
+  
+    // clear all the door segments
+    for (const auto &door_segment: door_segments)
+    {
+      auto map_start_end = getSegmentStartEnd(graph, door_segment, map_size, target_resolution);
+  
+      cv::line(
+        map,
+        cv::Point(map_start_end[0].x, map_start_end[0].y), cv::Point(map_start_end[1].x, map_start_end[1].y),
+        255
+      );
+    }
+  
+    return map;
+  }
+
+  /**
+   * @brief save the 2D layout of a floorplahGraph
+   * @param filename filename to save as
+   * @param graph the floorplanGraph to be saved
+   * @param resolution m/pixels
+   * @param size size of the map
+   */
+  static void saveGraphLayoutToPNG(std::string filename, const floorplanGraph &graph, double target_resolution=0.55, cv::Size map_size=cv::Size(256, 128))
+  {
+    cv::Mat map =  getGraphLayout(graph, target_resolution, map_size);
+    cv::imwrite(filename, map);
+  }
+
 };
 }
 

@@ -239,7 +239,7 @@ void GraphStatistics::calculateAverageClusterCoeffient()//ExportClusterCoeffDist
     for(int i=0; i < _database->getGraphs().size(); i++)
     {
         std::pair<ClusteringMap, double> kRes = GraphUtils::calculateClusterCoeff(_database->getGraphs()[i]);
-        if (isnan(kRes.second)){
+        if (std::isnan(kRes.second)){
         nanvalues++;
             continue;
         }
