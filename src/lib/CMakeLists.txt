@@ -3,7 +3,7 @@
 include_directories(/usr/include/boost)
 find_package(Boost COMPONENTS graph serialization REQUIRED)
 
-find_package(OpenCV 2.4)
+find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 ADD_LIBRARY(floorplan SHARED
