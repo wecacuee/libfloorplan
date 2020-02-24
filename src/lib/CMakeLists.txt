@@ -21,4 +21,7 @@ TARGET_LINK_LIBRARIES(floorplan
 )
 
 install(TARGETS floorplan DESTINATION ${OUTPUT})
+install(TARGETS floorplan DESTINATION lib)
+install(DIRECTORY . DESTINATION include
+                  FILES_MATCHING PATTERN "*.hpp")
 
